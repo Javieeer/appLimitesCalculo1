@@ -54,31 +54,45 @@ def formatear_fraccion(expresion):
 def graficar_funcion(funcion, variable, punto):
     """ Grafica la función y marca el límite en el punto especificado. """
     # Comprobar si ya hay una figura abierta y cerrarla si es necesario
-    plt.clf()  # Limpiar la figura actual
-    plt.close()  # Cerrar la ventana actual del gráfico
+    plt.clf()  
+    plt.close()
     
     # Convertir la función a una forma que pueda ser evaluada numéricamente
     f_lambdified = sympy.lambdify(variable, funcion, 'numpy')
     
-    # Generar valores para la gráfica
-    x_vals = np.linspace(punto - 10, punto + 10, 300, endpoint=True, dtype=float)
+    # Definir un rango de valores para x (en torno al punto)
+    x_vals_neg = np.linspace(punto - 10, punto - 0.1, 100, endpoint=True, dtype=float)
+    x_vals_pos = np.linspace(punto + 0.1, punto + 10, 100, endpoint=True, dtype=float)
     
-    # Filtrar los valores de x_vals que no conduzcan a una división por cero
-    y_vals = []
-    for val in x_vals:
+    # Generar los valores de y para los dos rangos de x (antes y después de la discontinuidad)
+    y_vals_neg = []
+    y_vals_pos = []
+    
+    # Para valores de x a la izquierda del punto de discontinuidad
+    for val in x_vals_neg:
         try:
-            # Intentar evaluar la función en cada valor de x
             y = f_lambdified(val)
-            # Si el valor es muy grande (para evitar divisiones por cero), asignamos NaN
-            if np.abs(y) > 1e10:  # Umbral de tolerancia para valores muy grandes
-                y_vals.append(np.nan)
+            if np.abs(y) > 1e10:  # Umbral para valores muy grandes
+                y_vals_neg.append(np.nan)
             else:
-                y_vals.append(y)
+                y_vals_neg.append(y)
         except ZeroDivisionError:
-            y_vals.append(np.nan)  # Si hay una división por cero, asignar NaN
+            y_vals_neg.append(np.nan)  # Si hay una división por cero, asignar NaN
     
-    # Crear la gráfica
-    plt.plot(x_vals, y_vals, label=str(funcion))
+    # Para valores de x a la derecha del punto de discontinuidad
+    for val in x_vals_pos:
+        try:
+            y = f_lambdified(val)
+            if np.abs(y) > 1e10:  # Umbral para valores muy grandes
+                y_vals_pos.append(np.nan)
+            else:
+                y_vals_pos.append(y)
+        except ZeroDivisionError:
+            y_vals_pos.append(np.nan)  # Si hay una división por cero, asignar NaN
+    
+    # Crear la gráfica: dos segmentos separados por la discontinuidad
+    plt.plot(x_vals_neg, y_vals_neg, color='b')  
+    plt.plot(x_vals_pos, y_vals_pos, color='b', label=str(funcion))  
     
     # Asegurarse de que el valor del límite es visible en la gráfica
     try:
@@ -87,7 +101,7 @@ def graficar_funcion(funcion, variable, punto):
         limite_valor = float(limite)
         
         # Marcar el límite en el gráfico
-        plt.scatter([punto], [limite_valor], color='red', zorder=5, label=f'Limite en x={punto} ({limite_valor})')
+        plt.scatter([punto], [limite_valor], color='red', zorder=5, label=f'Limite en x={punto} ({limite_valor})', marker='o', facecolors='white', edgecolors='red', s=100)
     except ZeroDivisionError:
         pass  # Si ocurre una división por cero al marcar el límite, no mostrar el punto
     except Exception as e:
