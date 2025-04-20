@@ -52,10 +52,10 @@ Nota: Tambien puedes ejecutarlo directamente con el ejecutable. Encuentralo en l
 ## 👨‍💻 Autores
 Proyecto desarrollado por estudiantes del programa de Ingeniería en Sistemas:
 
-- Daniel Esguerra – 085453642024
-- Michael Martínez – 085453942024
-- Jhonatan Rojas – 085450022024
-- Javier Zapata – 085453922024
+- Daniel Esguerra
+- Michael Martínez
+- Jhonatan Rojas
+- Javier Zapata
 
 ## 📜 Licencia
 Este proyecto es de uso académico. Puedes modificarlo y compartirlo con fines educativos. 🚀
