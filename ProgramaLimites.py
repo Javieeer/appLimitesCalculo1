@@ -8,7 +8,6 @@ from tkinter import messagebox
 x = sympy.symbols('x')
 
 # Función para calcular el límite y proceso paso a paso
-# Función para calcular el límite y proceso paso a paso
 def calcular_limite(funcion, variable, punto):
     proceso = []
 
@@ -30,9 +29,13 @@ def calcular_limite(funcion, variable, punto):
 
     # Paso 4: Calcular el límite
     try:
+        # Intentar simplificar la expresión antes de calcular el límite
+        funcion_simplificada = sympy.simplify(funcion)
+        
+        # Calcular el límite de la función simplificada
         limite = sympy.limit(funcion_simplificada, variable, punto)
 
-        # Casos especiales
+        # Verificar casos especiales
         if limite == sympy.oo or limite == -sympy.oo:
             proceso.append("El límite tiende a infinito.")
             return "∞", proceso
@@ -40,21 +43,20 @@ def calcular_limite(funcion, variable, punto):
             proceso.append("El límite es indefinido.")
             return "Indefinido", proceso
 
-        # Convertimos a float para asegurar compatibilidad
-        if isinstance(limite, sympy.Float) or isinstance(limite, float):
-            valor_limite = float(limite)
+        # Convertir a valor decimal solo si es necesario
+        if isinstance(limite, sympy.Expr) and not limite.is_number:
+            limite_valor = limite.evalf()
         else:
-            valor_limite = float(limite.evalf())
+            limite_valor = limite
 
-        valor_limite = round(valor_limite, 4) if abs(valor_limite) < 1 else round(valor_limite, 2)
-        proceso.append(f"Resultado del límite: {valor_limite}")
-        return valor_limite, proceso
+        proceso.append(f"Resultado del límite: {formatear_fraccion(limite_valor)}")
+        return limite_valor, proceso
+
+
 
     except Exception as e:
         proceso.append(f"Error al calcular el límite: {e}")
         return "Indefinido", proceso
-
-
 
 # Función para formatear fracciones visualmente
 def formatear_fraccion(expresion):
@@ -86,7 +88,7 @@ def graficar_funcion(funcion, variable, punto):
     # Convertir la función a una forma que pueda ser evaluada numéricamente
     f_lambdified = sympy.lambdify(variable, funcion, 'numpy')
     
-    # Dos graficas para evitar unión e el centro
+    # Dos graficas para evitar unión en el centro
     x_vals_neg = np.linspace(punto - 10, punto - 0.1, 100, endpoint=True, dtype=float)
     x_vals_pos = np.linspace(punto + 0.1, punto + 10, 100, endpoint=True, dtype=float)
     
@@ -120,10 +122,10 @@ def graficar_funcion(funcion, variable, punto):
     plt.plot(x_vals_neg, y_vals_neg, color='b')  
     plt.plot(x_vals_pos, y_vals_pos, color='b', label=str(funcion))  
     
-    # Limite en la grafica
+    # Limite en la gráfica
     try:
         limite = sympy.limit(funcion, x, punto)
-        limite_valor = round(float(limite), 2)
+        limite_valor = float(sympy.N(limite))
         plt.scatter([punto], [limite_valor], color='red', zorder=5, label=f'Limite en x={punto} ({limite_valor})', marker='o', facecolors='white', edgecolors='red', s=100)
         
     except ZeroDivisionError:
@@ -145,45 +147,55 @@ def graficar_funcion(funcion, variable, punto):
 
 # Función para obtener los datos de entrada
 def obtenerDatos(entrada_funcion, entrada_punto):
-    
-    funcion_str = entrada_funcion.get()
-    funcion_str = funcion_str.replace("^", "**")
-    
-    # Reemplazar la multiplicación implícita, como '3x' por '3*x'
-    funcion_str = re.sub(r'(\d)([a-zA-Z])', r'\1*\2', funcion_str)
+    try:
+        funcion_str = entrada_funcion.get()
+        funcion_str = funcion_str.replace("^", "**")
+        
+        # Reemplazar la multiplicación implícita, como '3x' por '3*x'
+        funcion_str = re.sub(r'(\d)([a-zA-Z])', r'\1*\2', funcion_str)
 
-    # Diccionario con funciones trigonométricas reconocidas
-    trig_funcs = {
-        'seno': 'sin',
-        'coseno': 'cos',
-        'tangente': 'tan',
-        'sec': 'sec',
-        'cosec': 'csc',
-        'cot': 'cot',
-        'raiz': 'sqrt',
-        'logaritmo': 'log',
-        'e^': 'exp'
-    }
+        # Diccionario con funciones trigonométricas reconocidas
+        trig_funcs = {
+            'seno': 'sin',
+            'coseno': 'cos',
+            'tangente': 'tan',
+            'sec': 'sec',
+            'cosec': 'csc',
+            'cot': 'cot',
+            'raiz': 'sqrt',
+            'logaritmo': 'log',
+            'e^': 'exp'
+        }
 
-    # Reemplazar funciones en español o comunes
-    for esp, sym in trig_funcs.items():
-        funcion_str = funcion_str.replace(esp, sym)
+        # Reemplazar funciones en español o comunes
+        for esp, sym in trig_funcs.items():
+            funcion_str = funcion_str.replace(esp, sym)
 
-    # Convertir a función simbólica con las funciones reconocidas por sympy
-    funcion = sympy.sympify(funcion_str, locals={'sin': sympy.sin, 'cos': sympy.cos, 'tan': sympy.tan,
-                                                'sec': sympy.sec, 'csc': sympy.csc, 'cot': sympy.cot,
-                                                'exp': sympy.exp, 'log': sympy.log, 'sqrt': sympy.sqrt})
+        # Convertir a función simbólica con las funciones reconocidas por sympy
+        funcion = sympy.sympify(funcion_str, locals={'sin': sympy.sin, 'cos': sympy.cos, 'tan': sympy.tan,
+                                                    'sec': sympy.sec, 'csc': sympy.csc, 'cot': sympy.cot,
+                                                    'exp': sympy.exp, 'log': sympy.log, 'sqrt': sympy.sqrt})
 
-    
-    # Redondear el punto de entrada a 2 decimales 
-    punto = round(float(entrada_punto.get()), 2) 
-    
-    return funcion, punto
+        # Validación de punto
+        try:
+            punto = float(entrada_punto.get())
+        except ValueError:
+            messagebox.showerror("Error", "El valor de x debe ser un número.")
+            return None, None  # Retornar None si hay error
+
+        punto = round(punto, 2)
+        return funcion, punto
+
+    except Exception as e:
+        messagebox.showerror("Error", "Hubo un error al obtener los datos. Verifique la sintaxis de la función.")
+        return None, None
 
 # Función que se ejecuta cuando se hace clic en el botón "Calcular Límite"
 def obtener_limite(entrada_funcion, entrada_punto, resultado_text):
     try:
         funcion, punto = obtenerDatos(entrada_funcion, entrada_punto)  
+        if funcion is None or punto is None:
+            return
         limite, proceso = calcular_limite(funcion, x, punto)
         
         # Limpiar el Text widget antes de mostrar el nuevo proceso
@@ -204,6 +216,8 @@ def obtener_limite(entrada_funcion, entrada_punto, resultado_text):
 def dibujar_limite(entrada_funcion, entrada_punto):
     try:
         funcion, punto = obtenerDatos(entrada_funcion, entrada_punto)  
+        if funcion is None or punto is None:
+            return
         graficar_funcion(funcion, x, punto)  
     except Exception as e:
         messagebox.showerror("Error", "Hubo un error al calcular el límite o graficar la función.\n" + str(e) + "\nVerifique la función ingresada y el punto.")
@@ -212,6 +226,7 @@ def dibujar_limite(entrada_funcion, entrada_punto):
 root = Tk()
 root.title("Programa Limites del mejor CIPAS")
 root.geometry("505x500")
+root.resizable(False, False)  # Evitar redimensionamiento de la ventana
 
 # ETIQUETAS Y ENTRADAS
 etiqueta_funcion = Label(root, text="Ingresa la función (ej. 3x^2 + 2x - 1): ")
