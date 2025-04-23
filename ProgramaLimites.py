@@ -147,12 +147,13 @@ def graficar_funcion(funcion, variable, punto):
 
 # Función para obtener los datos de entrada
 def obtenerDatos(entrada_funcion, entrada_punto):
+    
+    # Se encierra el proceso de obtención de datos para manejar errores
     try:
+        # Lee los datos de entrada y los prepara para su uso
         funcion_str = entrada_funcion.get()
         funcion_str = funcion_str.replace("^", "**")
-        
-        # Reemplazar la multiplicación implícita, como '3x' por '3*x'
-        funcion_str = re.sub(r'(\d)([a-zA-Z])', r'\1*\2', funcion_str)
+        funcion_str = re.sub(r'(\d)([a-zA-Z])', r'\1*\2', funcion_str) # Reemplazar la multiplicación implícita, como '3x' por '3*x'
 
         # Diccionario con funciones trigonométricas reconocidas
         trig_funcs = {
@@ -190,8 +191,10 @@ def obtenerDatos(entrada_funcion, entrada_punto):
         messagebox.showerror("Error", "Hubo un error al obtener los datos. Verifique la sintaxis de la función.")
         return None, None
 
-# Función que se ejecuta cuando se hace clic en el botón "Calcular Límite"
+# Función que se ejecuta con el botón "Calcular Límite"
 def obtener_limite(entrada_funcion, entrada_punto, resultado_text):
+    
+    # Se encierra el proceso de solución para manejar errores
     try:
         funcion, punto = obtenerDatos(entrada_funcion, entrada_punto)  
         if funcion is None or punto is None:
@@ -212,8 +215,10 @@ def obtener_limite(entrada_funcion, entrada_punto, resultado_text):
     except Exception as e:
         messagebox.showerror("Error", "Hubo un error al calcular el límite o graficar la función.\n" + str(e) + "\nVerifique la función ingresada y el punto.")
 
-# Función para graficar el límite
+# Función que se ejecuta con el botón "Graficar Límite"
 def dibujar_limite(entrada_funcion, entrada_punto):
+    
+    # Se encierra el proceso de graficación para manejar errores
     try:
         funcion, punto = obtenerDatos(entrada_funcion, entrada_punto)  
         if funcion is None or punto is None:
@@ -226,7 +231,7 @@ def dibujar_limite(entrada_funcion, entrada_punto):
 root = Tk()
 root.title("Programa Limites del mejor CIPAS")
 root.geometry("505x500")
-root.resizable(False, False)  # Evitar redimensionamiento de la ventana
+root.resizable(False, False) 
 
 # ETIQUETAS Y ENTRADAS
 etiqueta_funcion = Label(root, text="Ingresa la función (ej. 3x^2 + 2x - 1): ")
