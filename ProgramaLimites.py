@@ -8,47 +8,53 @@ from tkinter import messagebox
 x = sympy.symbols('x')
 
 # Función para calcular el límite y proceso paso a paso
+# Función para calcular el límite y proceso paso a paso
 def calcular_limite(funcion, variable, punto):
     proceso = []
-    
-    # Paso 1: Mostrar la función original (como fue ingresada)
-    funcion_original = funcion 
+
+    # Paso 1: Mostrar la función original
+    funcion_original = funcion
     proceso.append(f"\nFunción original:\n{formatear_fraccion(funcion_original)}\n")
-    
-    # Paso 2: Factorización de la función (si es posible)
-    funcion_factorizada = sympy.factor(funcion)
-    proceso.append(f"Función factorizada:\n{formatear_fraccion(funcion_factorizada)}\n")
-    
-    # Paso 3: Verificar si el denominador es 0 en el punto
+
+    # Paso 2: Verificar si hay indeterminación
     numerador, denominador = funcion.as_numer_denom()
+    num_val = numerador.subs(variable, punto)
+    den_val = denominador.subs(variable, punto)
+
+    if num_val == 0 and den_val == 0:
+        proceso.append("Se detecta una indeterminación 0/0. Se intentará simplificar la función.\n")
+
+    # Paso 3: Simplificar la función
+    funcion_simplificada = sympy.simplify(funcion)
+    proceso.append(f"Función simplificada:\n{formatear_fraccion(funcion_simplificada)}\n")
+
+    # Paso 4: Calcular el límite
     try:
-        denominador_valor = denominador.subs(variable, punto)
-        if denominador_valor == 0:
-            proceso.append("El denominador es 0 en el punto dado. Calculando el límite simbólicamente...\n")
-    except Exception as e:
-        proceso.append(f"Error al evaluar el denominador: {e}\n")
-    
-    # Paso 4: Calcular el límite simbólicamente
-    try:
-        limite = sympy.limit(funcion, variable, punto)
-        if limite.is_infinite:
+        limite = sympy.limit(funcion_simplificada, variable, punto)
+
+        # Casos especiales
+        if limite == sympy.oo or limite == -sympy.oo:
             proceso.append("El límite tiende a infinito.")
             return "∞", proceso
-        elif limite.is_nan:
-            proceso.append("El límite no existe o es indefinido.")
+        elif limite == sympy.zoo:
+            proceso.append("El límite es indefinido.")
             return "Indefinido", proceso
+
+        # Convertimos a float para asegurar compatibilidad
+        if isinstance(limite, sympy.Float) or isinstance(limite, float):
+            valor_limite = float(limite)
         else:
-            if limite < 1:
-                limite = round(float(limite), 2)
-            else:
-                limite = int(limite)
-            return limite, proceso
-    except ZeroDivisionError:
-        proceso.append("El límite no existe debido a una división por cero.")
-        return "Indefinido", proceso
+            valor_limite = float(limite.evalf())
+
+        valor_limite = round(valor_limite, 4) if abs(valor_limite) < 1 else round(valor_limite, 2)
+        proceso.append(f"Resultado del límite: {valor_limite}")
+        return valor_limite, proceso
+
     except Exception as e:
         proceso.append(f"Error al calcular el límite: {e}")
-        return "Error", proceso
+        return "Indefinido", proceso
+
+
 
 # Función para formatear fracciones visualmente
 def formatear_fraccion(expresion):
@@ -130,6 +136,7 @@ def graficar_funcion(funcion, variable, punto):
     plt.axhline(0, color='black',linewidth=1)
     plt.axvline(0, color='black',linewidth=1)
     plt.title(f'Gráfica del límite cuando x tiende a {punto}')
+    plt.gcf().canvas.manager.set_window_title("Gráfico Generado por el CIPAS")  # Cambia el título de la ventana
     plt.xlabel('x')
     plt.ylabel('y')
     plt.legend()
@@ -184,7 +191,7 @@ def obtener_limite(entrada_funcion, entrada_punto, resultado_text):
         resultado_text.delete(1.0, END) 
         
         # Mostrar el resultado del límite y el proceso paso a paso
-        resultado_text.insert(INSERT, f"El límite cuando x tiende a {punto} es: {limite}\n\nProceso:\n")
+        resultado_text.insert(INSERT, f"Proceso de solución:\n")
         for paso in proceso:
             resultado_text.insert(INSERT, f"{paso}\n")
         
