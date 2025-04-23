@@ -9,7 +9,6 @@ x = sympy.symbols('x')
 
 # Función para calcular el límite y proceso paso a paso
 def calcular_limite(funcion, variable, punto):
-    
     proceso = []
     
     # Paso 1: Mostrar la función original (como fue ingresada)
@@ -20,14 +19,36 @@ def calcular_limite(funcion, variable, punto):
     funcion_factorizada = sympy.factor(funcion)
     proceso.append(f"Función factorizada:\n{formatear_fraccion(funcion_factorizada)}\n")
     
-    # Paso 3: Calcular el límite
-    limite = sympy.limit(funcion, variable, punto)
-    if (limite<1):
-        limite = round(float(limite), 2)
-    else:
-        limite=int(limite)
+    # Paso 3: Verificar si el denominador es 0 en el punto
+    numerador, denominador = funcion.as_numer_denom()
+    try:
+        denominador_valor = denominador.subs(variable, punto)
+        if denominador_valor == 0:
+            proceso.append("El denominador es 0 en el punto dado. Calculando el límite simbólicamente...\n")
+    except Exception as e:
+        proceso.append(f"Error al evaluar el denominador: {e}\n")
     
-    return limite, proceso
+    # Paso 4: Calcular el límite simbólicamente
+    try:
+        limite = sympy.limit(funcion, variable, punto)
+        if limite.is_infinite:
+            proceso.append("El límite tiende a infinito.")
+            return "∞", proceso
+        elif limite.is_nan:
+            proceso.append("El límite no existe o es indefinido.")
+            return "Indefinido", proceso
+        else:
+            if limite < 1:
+                limite = round(float(limite), 2)
+            else:
+                limite = int(limite)
+            return limite, proceso
+    except ZeroDivisionError:
+        proceso.append("El límite no existe debido a una división por cero.")
+        return "Indefinido", proceso
+    except Exception as e:
+        proceso.append(f"Error al calcular el límite: {e}")
+        return "Error", proceso
 
 # Función para formatear fracciones visualmente
 def formatear_fraccion(expresion):
